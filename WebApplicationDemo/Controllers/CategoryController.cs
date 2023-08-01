@@ -1,0 +1,78 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using WebApplicationDemo.Data;
+using WebApplicationDemo.Models;
+
+namespace WebApplicationDemo.Controllers
+{
+    public class CategoryController : Controller
+    {
+        private readonly AppDbContext _db;
+        public CategoryController(AppDbContext db)
+        {
+            _db = db;
+        }
+        public IActionResult Index()
+        {
+            var categories = _db.Categories.ToList();
+            return View(categories);
+        }
+
+        public IActionResult Create()
+        {
+            return View();
+        }
+        [HttpPost]
+        public IActionResult Create(Category model)
+        {
+            if (model.Name.ToLower() == model.DisplayOrder.ToString())
+            {
+                ModelState.AddModelError("name", "Display Name cannot be equal to model name.");
+                TempData["error"] = "Model is not valid";
+            }
+            if (ModelState.IsValid)
+            {
+                _db.Categories.Add(model);
+                _db.SaveChanges();
+                TempData["success"] = "Category created successfully.";
+                return RedirectToAction("Index");
+            }
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public IActionResult Edit(Category category)
+        {
+            if (ModelState.IsValid)
+            {
+                _db.Update(category);
+                _db.SaveChanges();
+                TempData["success"] = "Category updated successfully.";
+                return RedirectToAction("Index");
+            }
+            return View(category);
+        }
+
+        public IActionResult Delete(int Id)
+        {
+            Category category = _db.Categories.FirstOrDefault(x => x.Id == Id);
+            if (category is null)
+            {
+                return NotFound();
+            }
+            return View(category);
+        }
+        [HttpPost]
+        public IActionResult Delete(Category category)
+        {
+            if (category == null)
+            {
+                return NotFound();
+            }
+            _db.Categories.Remove(category);
+            _db.SaveChanges();
+            TempData["success"] = "Category deleted successfully.";
+            return RedirectToAction("Index");
+        }
+    }
+}
